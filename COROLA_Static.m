@@ -16,7 +16,7 @@ addpath('gmm');addpath(genpath('gco-v3.0'));addpath(genpath('data'));addpath('On
 
 %%%%%%%%%%%%------Loading data path-----%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dataName           = dataList{1}; load(['data\real_data\' dataName],'ImData');
+dataName           = dataList{1}; load(['data\real_data\StaticCam\' dataName],'ImData');
 temp_GT            = strcat('data\real_data\GroundTruth\GT_',dataName,num2str(End_frame),'.bmp'); GT_Img = imread(temp_GT);
 %%%%%%%%%%%%------data for first frames-----%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -52,12 +52,12 @@ AdjMatrix          = getAdj(Init_mrf.sizeImg);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ImData_count       = 1;
 
-for moein_d=First_frame+Rank-1:End_frame  
+for Iteration=First_frame+Rank-1:End_frame  
     
     S              = ones(M_Height*M_Width,1);      %---forground support
     ImData_count   = ImData_count +1;
     %%%%%%%-----Initializing input frame parameters-----%%%%%%
-    ImData_temp    = ImData(:,:,moein_d);
+    ImData_temp    = ImData(:,:,Iteration);
     ImData_temp    = imresize(ImData_temp,[M_Height M_Width]);
     ImData_temp    = imfilter(ImData_temp,SE);
     if ImData_count> 2,  ImData1(:,:,1:end-1) = ImData1(:,:,2:end); end
@@ -73,7 +73,7 @@ for moein_d=First_frame+Rank-1:End_frame
         if inner_iter == 1
             [E, A_HAT, B_HAT,U_HAT,V_HAT,control,ImMean] = Online_Lowrank(ImData1,A_HAT,B_HAT,U_HAT,V_HAT,control,Rank);   %Solving Eq.7 for the first iteration--%
             UNorm = 0.5*norm(U_HAT(:),'fro');
-            if moein_d ==40+First_frame, mexCvBSLib(BG_3D,h,[Learning_Rate 10*10 0 0.5],uint8(Distance)); end
+            if Iteration ==40+First_frame, mexCvBSLib(BG_3D,h,[Learning_Rate 10*10 0 0.5],uint8(Distance)); end
             GMM_input = repmat(ImData1(:,:,end),[1 1 3]);
             [F, Red, Green, Blue, Sigma, Weight, dist_new]=mexCvBSLib(GMM_input,h);   %--applying GMM to seperate periodic noise from moving object
             W_store = W_store + double(Weight);
@@ -85,7 +85,7 @@ for moein_d=First_frame+Rank-1:End_frame
         if (inner_iter==1 || sum(S)>2*Rank)
             %%%%%%%%------Extracting Mask S using MRF --------%%%%%%%%%%%
             %%%%%%%%--------Section 3.3 in the paper-----------%%%%%%%%%%
-            [S,Omega,energy_cut] = Binary_Sparse(E_hat,Rank,Init_mrf,Sigma,AdjMatrix,W_store,Weight,Learning_Rate1);    %--Solving Eq.15 in the paper--%
+            [S,Omega,energy_cut] = Binary_Sparse(E_hat,Rank,Init_mrf,Sigma,AdjMatrix,W_store,Weight,1);    %--Solving Eq.15 in the paper--%
             if energy_cut <= old_energy,
                 old_energy = energy_cut;
                 old_Mask   = S;
@@ -108,10 +108,10 @@ for moein_d=First_frame+Rank-1:End_frame
         end
     end
     %%%%%%%%-----Showing results for each frame-----%%%%%%%%%%
-    disp(['Frame_number = ', num2str(moein_d), '    Termination Error = ' num2str(abs(energy_old-energy)/energy)]);
+    disp(['Frame_number = ', num2str(Iteration), '    Termination Error = ' num2str(abs(energy_old-energy)/energy)]);
     figure(1),
     subplot(1,2,2),imagesc(Final_Mask); colormap(gray);axis image;axis off, title('Foreground Mask');
-    subplot(1,2,1),imagesc(ImData(:,:,moein_d)); colormap(gray);axis image;axis off, title('Input');
+    subplot(1,2,1),imagesc(ImData(:,:,Iteration)); colormap(gray);axis image;axis off, title('Input');
 end
 mexCvBSLib(h);%Release memory
 %%%%%%%------Computing accuracy of COROLA------%%%%%%%%

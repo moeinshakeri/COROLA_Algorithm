@@ -1,5 +1,5 @@
 
-function [S,Omega,energy_cut] = Binary_Sparse(E_hat,Rank,Init_mrf,Sigma,AdjMatrix,W_store,Weight,Learning_Rate1)
+function [S,Omega,energy_cut] = Binary_Sparse(E_hat,Rank,Init_mrf,Sigma,AdjMatrix,W_store,Weight,scale)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% This function solves Eq.15 in the following paper:                %%%
 %%% Moein Shakeri and Hong Zhang,"COROLA: A sequential solution       %%%
@@ -26,7 +26,7 @@ connectivity_mrf_temp = connectivity_mrf;
 connectivity_mrf1 = connectivity_mrf;
 i = Rank;
 
-GCO_SetDataCost( hMRF, (Init_mrf.amplify/Init_mrf.gamma)*[ 0.5*(data_2D(:,i)).^2 , Init_mrf.beta*(ones(prod(Init_mrf.sizeImg),1))]');%, ~OmegaOut(:,i)*beta + OmegaOut(:,i)*0.5*max(E(:)).^2]' );
+GCO_SetDataCost( hMRF, (Init_mrf.amplify/Init_mrf.gamma)*[ 0.5*(data_2D(:,i)).^2 , scale*Init_mrf.beta*(ones(prod(Init_mrf.sizeImg),1))]');%, ~OmegaOut(:,i)*beta + OmegaOut(:,i)*0.5*max(E(:)).^2]' );
 %                 GCO_SetDataCost( hMRF, (amplify/gamma)*[ 0.5*(data_2D(:,i)).^2 , (coeff*Learning_Rate1)*((connectivity_mrf(:))-abs(data_2D(:,i))/max(abs(data_2D(:,i))))]');%, ~OmegaOut(:,i)*beta + OmegaOut(:,i)*0.5*max(E(:)).^2]' );
 GCO_Expansion(hMRF);
 Omega1(:,i)       = ( GCO_GetLabeling(hMRF) == 1 )';
